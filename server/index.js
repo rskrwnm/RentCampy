@@ -644,4 +644,8 @@ app.delete("/api/products/:id", requireAdmin, async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`API berjalan di http://localhost:${PORT}`));
+if (process.env.VERCEL !== "1") {
+  app.listen(PORT, () => console.log(`API berjalan di http://localhost:${PORT}`));
+}
+
+export default app;
