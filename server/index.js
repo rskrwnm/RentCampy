@@ -32,6 +32,19 @@ const requireAuth = (req, res, next) => {
   }
 };
 
+const optionalAuth = (req, res, next) => {
+  const header = req.headers.authorization || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : null;
+  if (token) {
+    try {
+      req.user = jwt.verify(token, JWT_SECRET);
+    } catch {
+      req.user = null;
+    }
+  }
+  next();
+};
+
 const requireAdmin = (req, res, next) =>
   requireAuth(req, res, () => {
     if (req.user.role !== "admin") {
@@ -491,15 +504,33 @@ const validateProduct = ({ name, category, description, price, stock }) => {
   return null;
 };
 
-app.get("/api/products", async (req, res) => {
+app.get("/api/products", optionalAuth, async (req, res) => {
   try {
     const { category } = req.query;
-    const { rows } = category
-      ? await pool.query(
-          "SELECT * FROM products WHERE $1 = ANY(category) ORDER BY id",
-          [category]
-        )
-      : await pool.query("SELECT * FROM products ORDER BY id");
+    let rows;
+    if (!req.user) {
+      ({ rows } = await pool.query(
+        `SELECT p.*, COALESCE(SUM(
+                   CASE WHEN o.id IS NOT NULL THEN oi.quantity ELSE 0 END
+                 ), 0)::int AS rental_count
+         FROM products p
+         LEFT JOIN rental_order_items oi ON oi.product_id = p.id
+         LEFT JOIN rental_orders o
+           ON o.id = oi.order_id AND o.status = ANY($1::text[])
+         WHERE $2::text IS NULL OR $2 = ANY(p.category)
+         GROUP BY p.id
+         ORDER BY rental_count DESC, p.id
+         LIMIT 6`,
+        [["borrowed", "returned"], category || null]
+      ));
+    } else {
+      ({ rows } = category
+        ? await pool.query(
+            "SELECT * FROM products WHERE $1 = ANY(category) ORDER BY id",
+            [category]
+          )
+        : await pool.query("SELECT * FROM products ORDER BY id"));
+    }
     res.json(rows);
   } catch (err) {
     console.error(err);

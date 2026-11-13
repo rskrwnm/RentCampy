@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
+import { isLoggedIn as checkIsLoggedIn } from "../auth";
 import { addItem } from "../features/cartSlice";
 
 import Card from "../components/Card";
@@ -31,19 +32,7 @@ const Home = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const isLoggedIn = localStorage.getItem("isLoggedIn");
-
-  const fetchData = async () => {
-    try {
-      const response = await api.get("/products");
-
-      setProducts(response.data);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const isUserLoggedIn = checkIsLoggedIn();
 
   const handleAddToCart = (product) => {
     const newItem = {
@@ -55,12 +44,30 @@ const Home = () => {
       price: product?.price,
     };
     dispatch(addItem(newItem));
-    dispatch(addItem(newItem));
   };
 
   useEffect(() => {
+    let active = true;
+    const fetchData = async () => {
+      try {
+        const response = await api.get("/products");
+        if (active) {
+          setProducts(
+            isUserLoggedIn ? response.data : response.data.slice(0, 6),
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
     fetchData();
-  }, []);
+    return () => {
+      active = false;
+    };
+  }, [isUserLoggedIn]);
 
   const keyword = search.trim().toLowerCase();
   const visibleProducts = keyword
@@ -116,7 +123,7 @@ const Home = () => {
                   />
                 </svg>
               </button>
-              {!isLoggedIn && (
+              {!isUserLoggedIn && (
                 <button
                   type="button"
                   onClick={() => navigate("/register")}
@@ -231,17 +238,21 @@ const Home = () => {
         <div className="mb-8 flex flex-col gap-5 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <span className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">
-              Pilih gear-mu
+              {isUserLoggedIn ? "Katalog lengkap" : "Favorit penyewa"}
             </span>
             <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
-              Perlengkapan pilihan
+              {isUserLoggedIn ? "Semua perlengkapan" : "Paling sering disewa"}
             </h2>
             <p className="mt-2 text-slate-500">
-              Semua yang kamu butuhkan untuk lebih dekat dengan alam.
+              {isUserLoggedIn
+                ? "Jelajahi seluruh perlengkapan untuk petualanganmu."
+                : "Pilihan perlengkapan yang paling sering disewa pelanggan kami."}
             </p>
           </div>
           <div className="text-sm font-medium text-slate-500">
-            {products.length} perlengkapan tersedia
+            {isUserLoggedIn
+              ? `${products.length} perlengkapan tersedia`
+              : `${products.length} produk populer`}
           </div>
         </div>
 
@@ -328,15 +339,7 @@ const Home = () => {
       </section>
 
       <footer className="bg-emerald-950 text-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10">
-          <div className="flex items-center gap-3">
-            <img
-              src="/Logo.png"
-              alt=""
-              className="h-9 w-9 rounded-full bg-white object-contain p-1"
-            />
-            <span className="font-extrabold tracking-tight">RentCampy</span>
-          </div>
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-5 py-8 text-center sm:px-8 lg:px-10">
           <p className="text-sm text-emerald-100/70">
             © {new Date().getFullYear()} RentCampy. Bawa pulang cerita, bukan
             perlengkapannya.
