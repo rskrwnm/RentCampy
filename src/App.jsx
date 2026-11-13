@@ -1,15 +1,16 @@
-import React from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { AdminLayout, GuestLayout, PublicLayout } from './components/Layouts';
 import Home from './pages/Home';
 import ProductDetails from './pages/ProductDetails';
 import Admin from './pages/Admin';
 import AdminOverview from './pages/AdminOverview';
+import AdminOrders from './pages/AdminOrders';
 import AdminUsers from './pages/AdminUsers';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Contact from './pages/Contact';
 import Cart from './pages/Cart';
+import Orders from './pages/Orders';
 
 const App = () => {
   return (
@@ -20,6 +21,7 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/productdetail/:id" element={<ProductDetails />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/orders" element={<Orders />} />
           <Route path="/Contact" element={<Contact />} />
         </Route>
 
@@ -33,6 +35,7 @@ const App = () => {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminOverview />} />
           <Route path="products" element={<Admin />} />
+          <Route path="orders" element={<AdminOrders />} />
           <Route path="users" element={<AdminUsers />} />
         </Route>
       </Routes>

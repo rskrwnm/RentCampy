@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import api, { getErrorMessage } from '../api';
 import imageCompression from 'browser-image-compression';
 import Pagination from '../components/Pagination';
@@ -25,6 +25,7 @@ const Admin = () => {
   const [category, setProductCategory] = useState('');
   const [image, setProductImage] = useState(null);
   const [price, setProductPrice] = useState('');
+  const [stock, setProductStock] = useState('0');
   const [description, setdescription] = useState('');
   const [productData, setProductData] = useState([]);
   const [imageError, setImageError] = useState('');
@@ -54,6 +55,7 @@ const Admin = () => {
     setProductCategory('');
     setProductImage(null);
     setProductPrice('');
+    setProductStock('0');
     setdescription('');
     setImageError('');
   };
@@ -70,7 +72,9 @@ const Admin = () => {
 
     try {
       const compressedFile = await imageCompression(file, {
-        maxSizeMB: 0.05,
+        maxSizeMB: 0.5,
+        maxWidthOrHeight: 1600,
+        initialQuality: 0.9,
         useWebWorker: true,
       });
       setProductImage(compressedFile);
@@ -86,6 +90,7 @@ const Admin = () => {
     setProductCategory(productToEdit.category[0]);
     setProductImage(null);
     setProductPrice(productToEdit.price);
+    setProductStock(String(productToEdit.stock ?? 0));
     setdescription(productToEdit.description);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -116,6 +121,7 @@ const Admin = () => {
         category: [category],
         description,
         price,
+        stock: Number(stock),
       };
       // Saat edit tanpa gambar baru, gambar lama dipertahankan oleh server.
       if (image) payload.image = await readAsDataURL(image);
@@ -238,10 +244,23 @@ const Admin = () => {
               />
             </div>
             <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Stok total (unit)</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                required
+                value={stock}
+                onChange={(e) => setProductStock(e.target.value)}
+                className={inputClass}
+              />
+              <p className="mt-1 text-xs text-gray-500">Jumlah perlengkapan fisik yang tersedia untuk disewakan.</p>
+            </div>
+            <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Image Of Product
                 {editingProduct && (
-                  <span className="font-normal text-gray-400"> (kosongkan jika tidak diganti)</span>
+                  <span className="font-normal text-gray-400"> (unggah ulang foto asli untuk mengganti kualitas gambar lama)</span>
                 )}
               </label>
               <input
@@ -297,6 +316,7 @@ const Admin = () => {
                   <th className="px-3 py-3">Category</th>
                   <th className="px-3 py-3">Description</th>
                   <th className="px-3 py-3">Price</th>
+                  <th className="px-3 py-3">Stok</th>
                   <th className="px-3 py-3 text-center">Action</th>
                 </tr>
               </thead>
@@ -332,6 +352,7 @@ const Admin = () => {
                     <td className="whitespace-nowrap px-3 py-3 font-medium">
                       {formatRupiah(product.price)}
                     </td>
+                    <td className="px-3 py-3 font-semibold text-gray-700">{product.stock ?? 0} unit</td>
                     <td className="whitespace-nowrap px-3 py-3 text-center">
                       <button
                         onClick={() => handleEdit(product.id)}
@@ -350,7 +371,7 @@ const Admin = () => {
                 ))}
                 {filteredProducts.length === 0 && (
                   <tr>
-                    <td colSpan="7" className="px-3 py-10 text-center text-gray-400">
+                    <td colSpan="8" className="px-3 py-10 text-center text-gray-400">
                       Tidak ada produk.
                     </td>
                   </tr>

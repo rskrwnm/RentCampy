@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import api, { getErrorMessage } from "../api";
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -30,7 +31,15 @@ const Login = () => {
       localStorage.setItem("token", data.token);
       localStorage.setItem("isLoggedIn", true);
       localStorage.setItem("user", JSON.stringify(data.user));
-      navigate(isAdmin ? "/admin" : "/");
+      const returnTo = location.state?.returnTo;
+      const destination =
+        typeof returnTo === "string" && returnTo.startsWith("/") && !returnTo.startsWith("//")
+          ? returnTo
+          : "/";
+      navigate(
+        isAdmin ? "/admin" : destination,
+        !isAdmin && location.state?.checkout ? { state: { checkout: location.state.checkout } } : undefined
+      );
     } catch (error) {
       setErrorMessage(getErrorMessage(error, "Login gagal. Silakan coba lagi."));
     } finally {

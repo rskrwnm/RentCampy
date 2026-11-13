@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import Swal from "sweetalert2";
 import {
   ChartPieIcon,
+  ClipboardListIcon,
   CubeIcon,
   HomeIcon,
   LogoutIcon,
@@ -17,19 +18,23 @@ import { clearSession, getStoredUser } from "../auth";
 const ADMIN_MENU = [
   { to: "/admin", label: "Ringkasan", icon: ChartPieIcon, end: true },
   { to: "/admin/products", label: "Kelola Produk", icon: CubeIcon },
+  { to: "/admin/orders", label: "Peminjaman", icon: ClipboardListIcon },
   { to: "/admin/users", label: "Kelola User", icon: UsersIcon },
 ];
 
 const USER_MENU = [
   { to: "/", label: "Katalog", icon: HomeIcon, end: true },
   { to: "/cart", label: "Keranjang", icon: ShoppingCartIcon, badge: true },
+  { to: "/orders", label: "Pesanan Saya", icon: ClipboardListIcon },
 ];
 
 // Layout sidebar untuk admin dan user yang sudah login.
 const DashboardLayout = ({ role }) => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const cartCount = useSelector((state) => state.cart.items.length);
+  const cartCount = useSelector((state) =>
+    state.cart.items.reduce((total, item) => total + (Number(item.quantity) || 1), 0)
+  );
 
   const isAdmin = role === "admin";
   const menu = isAdmin ? ADMIN_MENU : USER_MENU;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
 import { getStoredUser } from '../auth';
@@ -40,6 +40,8 @@ const AdminOverview = () => {
   const cards = [
     { label: 'Total Produk', value: stats.totalProducts },
     { label: 'Total User', value: stats.totalUsers },
+    { label: 'Total Peminjaman', value: stats.totalOrders },
+    { label: 'Perlu Ditinjau', value: stats.pendingOrders },
     ...stats.byCategory.map((c) => ({ label: `Kategori ${c.category}`, value: c.count })),
   ];
 
@@ -53,7 +55,7 @@ const AdminOverview = () => {
           <p className="text-gray-500">Selamat datang, {user?.email}</p>
         </div>
 
-        <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
           {cards.map((c) => (
             <div key={c.label} className="rounded-xl bg-white p-5 shadow-sm">
               <p className="text-sm text-gray-500">{c.label}</p>
@@ -63,6 +65,22 @@ const AdminOverview = () => {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
+          <div className="rounded-xl border border-amber-100 bg-amber-50 p-6 shadow-sm">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Permohonan peminjaman</h2>
+                <p className="mt-1 text-sm text-gray-600">
+                  {stats.pendingOrders} pesanan menunggu keputusan admin.
+                </p>
+              </div>
+              <Link
+                to="/admin/orders"
+                className="shrink-0 rounded-lg bg-emerald-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-900"
+              >
+                Kelola →
+              </Link>
+            </div>
+          </div>
           <div className="rounded-xl bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-lg font-semibold text-gray-800">Produk per Kategori</h2>
             {stats.byCategory.length === 0 ? (
